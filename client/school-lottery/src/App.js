@@ -1,19 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FileUpload from './components/FileUpload';
 import FileList from './components/FileList';
 import Lottery from './components/Lottery';
+import Layout from './components/Layout';
+import API from './api';
+import './App.css';
 
-function App() {
+export default function App() {
+  const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
 
+  const fetchFiles = async () => {
+    const res = await API.get('/files');
+    setFiles(res.data);
+  };
+
+  useEffect(() => {
+    fetchFiles();
+  }, []);
+
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>הגרלת תלמידים</h1>
-      <FileUpload onUpload={() => setSelectedFile(null)} />
-      <FileList onSelect={file => setSelectedFile(file)} />
-      {selectedFile && <Lottery filename={selectedFile} />}
-    </div>
+    <Layout>
+      <div className="app-container">
+        <h1>🎉 הגרלת תלמידים</h1>
+
+        <FileUpload onUpload={fetchFiles} />
+        <FileList files={files} onSelect={setSelectedFile} />
+
+        {selectedFile && <Lottery filename={selectedFile} />}
+      </div>
+    </Layout>
   );
 }
-
-export default App;

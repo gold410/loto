@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import API from '../api';
 
 export default function FileUpload({ onUpload }) {
-  const [file, setFile] = useState(null);
 
-  const handleUpload = async () => {
+  const handleUpload = async (file) => {
     if (!file) return;
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -13,8 +13,8 @@ export default function FileUpload({ onUpload }) {
       await API.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      onUpload();
-      setFile(null);
+
+      onUpload(); // <-- כאן מעדכנים את הרשימה מיד אחרי ההעלאה
     } catch (err) {
       console.error(err);
       alert('שגיאה בהעלאת הקובץ');
@@ -22,9 +22,9 @@ export default function FileUpload({ onUpload }) {
   };
 
   return (
-    <div>
-      <input type="file" onChange={e => setFile(e.target.files[0])} />
-      <button onClick={handleUpload}>העלה קובץ</button>
-    </div>
+    <input className='input'
+      type="file"
+      onChange={e => handleUpload(e.target.files[0])} // העלאה אוטומטית
+    />
   );
 }

@@ -17,6 +17,7 @@ app.use('/uploads', express.static('uploads'));
 
 // שימוש בראוטים
 app.use('/api', excelRoutes);
+// app.use('api/loto',lotoRoute)
 
 //חיבור למונגו
 mongoose.connection.once('open',()=>{

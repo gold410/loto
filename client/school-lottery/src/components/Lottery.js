@@ -61,7 +61,7 @@ export default function Lottery({ filename }) {
             });
 
             setTimeout(() => {
-              setBottomBalls(prev => [...prev, { letter, idx }]);
+              setBottomBalls(prev => [...prev, { letter, idx, hue: Math.random() * 360 }]);
               setBalls(prev =>
                 prev.map(b => (b.isFlying ? { ...b, isFlying: false } : b))
               );
@@ -97,7 +97,7 @@ export default function Lottery({ filename }) {
     const animateProps = showConfetti
       ? { x: 0, y: 0 } // עצירה כשיש קונפטי
       : ball.isFlying
-      ? { x: 0, y: containerSize / 2 + 60 } // למטה
+      ? { x: containerSize / 2 + 100, y: 0 } // לצד ימין
       : { 
           x: [0, randomX1, randomX2, randomX3, randomX4, 0], 
           y: [0, randomY1, randomY2, randomY3, randomY4, 0],
@@ -147,7 +147,7 @@ export default function Lottery({ filename }) {
   });
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
+    <div style={{ textAlign: 'center', marginTop: '50px', position: 'relative' }}>
       <button
         onClick={draw}
         disabled={drawing}
@@ -161,40 +161,45 @@ export default function Lottery({ filename }) {
           width: containerSize,
           height: containerSize,
           borderRadius: '50%',
-          border: '3px solid #333',
+          border: '6px solid #fff',
           margin: '40px auto',
           position: 'relative',
           overflow: 'hidden',
+          background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+          boxShadow: `
+            0 0 40px rgba(168, 237, 234, 0.4),
+            inset 0 0 20px rgba(255, 255, 255, 0.2),
+            0 8px 32px rgba(0, 0, 0, 0.2)
+          `
         }}
       >
         {ballsElements}
       </div>
 
-      {/* שורה תחתונה מימין לשמאל */}
+      {/* שורה אופקית מימין לשמאל */}
       <div
         style={{
           display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          gap: '5px',
-          position: 'relative',
-          height: ballSize + 20,
-          marginTop: '20px',
-          direction: 'rtl'
+          flexDirection: 'row-reverse',
+          justifyContent: 'center',
+          gap: '10px',
+          marginTop: '50px',
+          marginBottom: '100px',
+          position: 'relative'
         }}
       >
-        {bottomBalls.reverse().map((ball, idx) => {
+        {bottomBalls.map((ball, idx) => {
           return (
             <motion.div
               key={idx}
-              initial={{ top: 0, left: containerSize / 2 - ballSize / 2 }}
-              animate={{ top: 0, right: idx * (ballSize + 5) }}
-              transition={{ duration: 3 }} // איטי יותר לכדורים התחתונים
+              initial={{ x: 0, y: -400 }}
+              animate={{ x: 0, y: 0 }}
+              transition={{ duration: 1.5, ease: 'easeOut' }}
               style={{
                 width: ballSize,
                 height: ballSize,
                 borderRadius: '50%',
-                background: `radial-gradient(circle at 30% 30%, hsl(200,70%,80%), hsl(200,70%,60%), hsl(200,70%,40%))`,
+                background: `radial-gradient(circle at 30% 30%, hsl(${ball.hue},70%,80%), hsl(${ball.hue},70%,60%), hsl(${ball.hue},70%,40%))`,
                 boxShadow: `
                   inset -4px -4px 8px rgba(0,0,0,0.2),
                   inset 4px 4px 8px rgba(255,255,255,0.2),
@@ -206,9 +211,7 @@ export default function Lottery({ filename }) {
                 fontWeight: 'bold',
                 color: '#fff',
                 fontSize: '1.5rem',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-                transform: 'perspective(100px) rotateX(10deg) rotateY(10deg)',
-                position: 'absolute',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
               }}
             >
               {ball.letter}
