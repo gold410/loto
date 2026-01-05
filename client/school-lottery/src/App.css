@@ -8,19 +8,36 @@ html, body {
   background-repeat: no-repeat;
   background-attachment: fixed;
   font-family: Arial, sans-serif;
-   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 50px;
+  /* use normal page flow so scrollbar is on the browser edge */
+  display: block;
+  padding-top: 0;
+  /* allow vertical scrolling on the page */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #root {
   height: auto;
-  width: 100vw;
+  width: 100%;
   padding-top: 20px;
+  /* let content determine height so page can scroll */
+  overflow: visible;
 }
 
-/* קונטיינר מרכזי */
+/* קונטיינר מרכזי — משתמשים ב־.app-container בדפים */
+.app-container {
+  width: 90%;
+  max-width: 800px;
+  margin: 50px auto; /* centers and gives top spacing */
+  /* remove white box look */
+  background: transparent;
+  padding: 30px;
+  border-radius: 0;
+  box-shadow: none;
+  text-align: center;
+}
+
+/* קונטיינר ישן (שמור אם נשתמש בו) */
 .container {
   width: 90%;
   max-width: 800px;
@@ -49,6 +66,12 @@ html, body {
   display: flex;
   justify-content: center;
   margin-top: 20px;
+}
+
+/* animation for winner card */
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .bottom-balls .ball {

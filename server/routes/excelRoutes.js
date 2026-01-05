@@ -11,4 +11,7 @@ router.delete('/students/all', excelController.deleteAllStudents);
 router.get('/draw/:filename', excelController.drawWinner);
 router.get('/winners', excelController.getAllWinners);
 
+// // Route to migrate/fix students that are missing firstName/lastName (run once if needed)
+// router.post('/migrate-students', excelController.migrateStudents);
+
 module.exports = router;

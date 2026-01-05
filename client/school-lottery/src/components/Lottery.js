@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Confetti from 'react-confetti';
 import { motion } from 'framer-motion';
 
 export default function Lottery({ filename }) {
+  const navigate = useNavigate();
   const [winner, setWinner] = useState('');
   const [balls, setBalls] = useState([]);
   const [drawing, setDrawing] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [bottomBalls, setBottomBalls] = useState([]);
+
+  // confetti control
+  const confettiDuration = 8000; // milliseconds
+  const confettiTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (confettiTimeoutRef.current) clearTimeout(confettiTimeoutRef.current);
+    };
+  }, []);
 
   const containerSize = 300;
   const ballSize = 50;
@@ -38,37 +50,61 @@ export default function Lottery({ filename }) {
       x: 0,
       y: 0,
       isFlying: false,
+      locked: false, 
     }));
     setBalls(initialBalls);
 
     try {
       const res = await API.get(`/draw/${filename}`);
       const name = res.data.name || '';
+      name.split('').forEach(l =>
+  console.log("הקוד של האות",l, l.charCodeAt(0))
+);
+
       setWinner(name);
 
       setTimeout(() => {
         name.split('').forEach((letter, idx) => {
+          console.log(`Processing letter: ${letter} at index ${idx}`);
           setTimeout(() => {
             setBalls(prev => {
               const availableIdx = Math.floor(Math.random() * prev.length);
               const newBalls = [...prev];
+              console.log(`Changing ball ${availableIdx} from ${newBalls[availableIdx].letter} to ${letter}`);
               newBalls[availableIdx] = {
                 ...newBalls[availableIdx],
                 letter,
                 isFlying: true,
+                forceUpdate: Date.now(),
+                isNameLetter: true
               };
               return newBalls;
             });
 
             setTimeout(() => {
               setBottomBalls(prev => [...prev, { letter, idx, hue: Math.random() * 360 }]);
-              setBalls(prev =>
-                prev.map(b => (b.isFlying ? { ...b, isFlying: false } : b))
-              );
+             setBalls(prev => {
+  const availableIdx = Math.floor(Math.random() * prev.length);
+  const newBalls = [...prev];
+  newBalls[availableIdx] = {
+    ...newBalls[availableIdx],
+    letter,
+    isFlying: true,
+    forceUpdate: Date.now(),
+    isNameLetter: true
+  };
+  return newBalls;
+});
+
 
               if (idx === name.length - 1) {
                 setShowConfetti(true);
                 setDrawing(false);
+                // show confetti for confettiDuration then navigate to winner
+                confettiTimeoutRef.current = setTimeout(() => {
+                  setShowConfetti(false);
+                  navigate(`/winner/${encodeURIComponent(name)}`);
+                }, confettiDuration);
               }
             }, 1000);
           }, idx * 5000); // 5 שניות בין כל כדור
@@ -95,9 +131,12 @@ export default function Lottery({ filename }) {
     const randomY4 = (Math.random() - 0.5) * radius * 2;
 
     const animateProps = showConfetti
-      ? { x: 0, y: 0 } // עצירה כשיש קונפטי
+      ? { 
+          x: (Math.random() - 0.5) * (containerSize - ballSize * 2), 
+          y: containerSize / 2 - ballSize / 4 - (Math.random() * ballSize)
+        }
       : ball.isFlying
-      ? { x: containerSize / 2 + 100, y: 0 } // לצד ימין
+      ? { x: containerSize / 2 + 100, y: 0 }
       : { 
           x: [0, randomX1, randomX2, randomX3, randomX4, 0], 
           y: [0, randomY1, randomY2, randomY3, randomY4, 0],
@@ -105,11 +144,11 @@ export default function Lottery({ filename }) {
         };
 
     const transitionProps = showConfetti
-      ? { duration: 0.3, ease: 'easeOut' } // עצירה מהירה
+      ? { duration: 1, ease: 'easeOut' }
       : ball.isFlying
-      ? { duration: 2, ease: 'easeInOut' } // יותר איטי לכדורים שטסים
+      ? { duration: 1.5, ease: 'easeInOut' }
       : { 
-          duration: 0.5 + Math.random() * 0.5, // מהירות רנדומלית מהירה יותר
+          duration: 0.3 + Math.random() * 0.3,
           repeat: Infinity, 
           ease: 'easeInOut',
           repeatType: 'loop'
@@ -117,7 +156,8 @@ export default function Lottery({ filename }) {
 
     return (
       <motion.div
-        key={`${ball.idx}-${showConfetti ? 'stopped' : 'moving'}`} // מאלץ רי-רנדר כשהקונפטי מתחיל
+key={`${ball.idx}-${ball.letter}-${ball.forceUpdate || 0}`}
+        initial={false}
         style={{
           width: ballSize,
           height: ballSize,
@@ -137,11 +177,17 @@ export default function Lottery({ filename }) {
           fontWeight: 'bold',
           color: '#fff',
           fontSize: '1.5rem',
+          fontFamily: '"Noto Sans Hebrew", sans-serif',
         }}
         animate={animateProps}
         transition={transitionProps}
       >
-        {ball.letter}
+        <span style={{
+          borderRadius: '3px',
+          padding: '2px',
+        }}>
+          {ball.letter}
+        </span>
       </motion.div>
     );
   });
@@ -213,14 +259,28 @@ export default function Lottery({ filename }) {
                 fontSize: '1.5rem',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
               }}
+              
             >
               {ball.letter}
+              
             </motion.div>
+            
           );
+          
         })}
       </div>
 
-      {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} recycle={false} />}
+      {showConfetti && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 9999 }}>
+          <Confetti 
+            width={window.innerWidth} 
+            height={window.innerHeight} 
+            recycle={true}
+            numberOfPieces={300}
+            gravity={0.2}
+          />
+        </div>
+      )}
     </div>
   );
 }
